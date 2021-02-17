@@ -2,6 +2,7 @@
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
 #include <string>
+#include <list>
 
 //! \brief An in-order byte stream.
 
@@ -11,7 +12,10 @@
 class ByteStream {
   private:
     // Your code here -- add private members as necessary.
-
+    std::list<char> store{};
+    size_t cap;
+    size_t _bytes_written = 0, _bytes_read = 0;
+    bool _input_ended = false;
     // Hint: This doesn't need to be a sophisticated data structure at
     // all, but if any of your tests are taking longer than a second,
     // that's a sign that you probably want to keep exploring
@@ -80,6 +84,8 @@ class ByteStream {
     //! Total number of bytes popped
     size_t bytes_read() const;
     //!@}
+    
+    
 };
 
 #endif  // SPONGE_LIBSPONGE_BYTE_STREAM_HH

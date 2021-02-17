@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 
+
 using namespace std;
 
 void get_URL(const string &host, const string &path) {
@@ -17,8 +18,18 @@ void get_URL(const string &host, const string &path) {
     // (not just one call to read() -- everything) until you reach
     // the "eof" (end of file).
 
-    cerr << "Function called: get_URL(" << host << ", " << path << ").\n";
-    cerr << "Warning: get_URL() has not been implemented yet.\n";
+    TCPSocket conn;
+    conn.connect(Address(host, "http"));
+    conn.write("GET " + path + " HTTP/1.1\r\n");
+    conn.write("Host: " + host + "\r\n");
+    conn.write("Connection: close\r\n");
+    conn.write("\r\n");
+
+    string msg_received;
+    while (!conn.eof()){
+        conn.read(msg_received);
+        cout << msg_received;
+    }
 }
 
 int main(int argc, char *argv[]) {
