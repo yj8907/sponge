@@ -1,4 +1,5 @@
 #include "wrapping_integers.hh"
+#include <iostream>
 
 // Dummy implementation of a 32-bit wrapping integer
 
@@ -14,8 +15,9 @@ using namespace std;
 //! \param n The input absolute 64-bit sequence number
 //! \param isn The initial sequence number
 WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
-    DUMMY_CODE(n, isn);
-    return WrappingInt32{0};
+    uint64_t uint32_max_p1 = (uint64_t)UINT32_MAX + 1;
+    uint32_t wrapped_value = (n + isn.raw_value()) % uint32_max_p1;
+    return WrappingInt32(wrapped_value);
 }
 
 //! Transform a WrappingInt32 into an "absolute" 64-bit sequence number (zero-indexed)
@@ -29,6 +31,19 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! and the other stream runs from the remote TCPSender to the local TCPReceiver and
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
-    DUMMY_CODE(n, isn, checkpoint);
-    return {};
+    
+    uint64_t uint32_max_p1 = (uint64_t)UINT32_MAX + 1;
+    uint32_t wrapped_value = (checkpoint + isn.raw_value()) % uint32_max_p1;
+        
+    uint32_t diff = n.raw_value() >= wrapped_value ?
+            n.raw_value() - wrapped_value:
+            uint32_max_p1 - (wrapped_value - n.raw_value());
+    
+    uint64_t offset = diff % uint32_max_p1;
+    uint64_t output = checkpoint + offset;
+    if (offset > uint32_max_p1/2 && output >= uint32_max_p1) {
+        output -= uint32_max_p1;
+    }
+    
+    return output;
 }
