@@ -8,6 +8,22 @@
 
 #include <functional>
 #include <queue>
+#include <thread>
+#include <iostream>
+
+class TCPTimer{
+  private:
+    bool _running = false;
+    size_t _init_time{0};
+    
+  public:
+    TCPTimer();
+    void start(size_t);
+    void stop();
+    void restart(size_t);
+    bool alarm(size_t, size_t);
+    bool started();
+};
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -22,16 +38,27 @@ class TCPSender {
 
     //! outbound queue of segments that the TCPSender wants sent
     std::queue<TCPSegment> _segments_out{};
-
+    
+    std::queue<TCPSegment> _last_segments_out{};
+    
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
-
+    unsigned int _rto;
+    
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
-
+    bool _fin{false};
+    
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
-
+    
+    size_t _consecutive_rt{0};
+    size_t _curr_time{0};
+    TCPTimer _rt_timer;
+    size_t _relative_ws{1};
+    size_t _window_size{1};
+    WrappingInt32 _curr_ack{0};
+    
   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
@@ -55,9 +82,14 @@ class TCPSender {
 
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();
-
+    
+    void retransmit();
+    
     //! \brief Notifies the TCPSender of the passage of time
     void tick(const size_t ms_since_last_tick);
+    
+    size_t curr_time() const { return _curr_time; };
+    size_t rto() const {return _rto; }
     //!@}
 
     //! \name Accessors
@@ -88,5 +120,6 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 };
+
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
